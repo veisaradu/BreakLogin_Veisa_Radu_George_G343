@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require("../db/database");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
+const authMiddleware = require("../middleware/authMiddleware");
 
 router.post("/register", (req, res) => {
     const { email, password } = req.body;
@@ -26,7 +27,14 @@ router.post("/register", (req, res) => {
 router.post("/login", (req, res) => {
     const { email, password } = req.body;
 
-    const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
+    let user;
+    try {
+        user = db.prepare(
+            "SELECT * FROM users WHERE email = '" + email + "'"
+        ).get();
+    } catch (err) {
+        return res.status(500).json({ error: "Database error" });
+    }
 
     if (!user) {
         return res.status(401).json({ error: "User not found" });
@@ -98,8 +106,6 @@ router.post("/reset-password", (req, res) => {
 
     return res.status(200).json({ message: "Password reset successful" });
 });
-
-const authMiddleware = require("../middleware/authMiddleware");
 
 router.get("/me", authMiddleware, (req, res) => {
     const user = db
