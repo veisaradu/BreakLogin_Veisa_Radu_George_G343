@@ -99,4 +99,18 @@ router.post("/reset-password", (req, res) => {
     return res.status(200).json({ message: "Password reset successful" });
 });
 
+const authMiddleware = require("../middleware/authMiddleware");
+
+router.get("/me", authMiddleware, (req, res) => {
+    const user = db
+        .prepare("SELECT id, email, role, created_at FROM users WHERE id = ?")
+        .get(req.user.id);
+
+    if (!user) {
+        return res.status(404).json({ error: "User not found" });
+    }
+
+    return res.status(200).json(user);
+});
+
 module.exports = router;

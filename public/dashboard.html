@@ -72,6 +72,12 @@
     .card a:hover {
       text-decoration: underline;
     }
+
+    #userInfo {
+      color: #444;
+      font-size: 0.95rem;
+      margin-top: 0.5rem;
+    }
   </style>
 </head>
 <body>
@@ -87,6 +93,7 @@
     <div class="card">
       <h2>Welcome!</h2>
       <p>You are logged in to the AuthX internal portal.</p>
+      <p id="userInfo"></p>
       <p>
         <a href="/tickets.html">Go to Tickets →</a>
       </p>
@@ -98,6 +105,19 @@
       await fetch("/auth/logout", { method: "POST" });
       window.location.href = "/login.html";
     }
+
+    async function loadUser() {
+      const res = await fetch("/auth/me");
+      if (res.status === 401) {
+        window.location.href = "/login.html";
+        return;
+      }
+      const user = await res.json();
+      document.getElementById("userInfo").textContent =
+        "Logged in as: " + user.email + " | Role: " + user.role;
+    }
+
+    loadUser();
   </script>
 </body>
 </html>
