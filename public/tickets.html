@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AuthX – Tickets</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+    }
+
+    nav {
+      background: #e53935;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+    }
+
+    nav h1 {
+      font-size: 1.2rem;
+    }
+
+    nav div a {
+      color: white;
+      text-decoration: none;
+      margin-left: 1.5rem;
+      font-size: 0.95rem;
+    }
+
+    nav div a:hover {
+      text-decoration: underline;
+    }
+
+    .content {
+      padding: 2rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 1.5rem;
+    }
+
+    .card h2 {
+      color: #333;
+      margin-bottom: 1.25rem;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-family: Arial, sans-serif;
+    }
+
+    textarea {
+      height: 80px;
+      resize: vertical;
+    }
+
+    button {
+      padding: 0.75rem 1.5rem;
+      background: #e53935;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #c62828;
+    }
+
+    #message {
+      padding: 0.75rem;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    #message.success {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    #message.error {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .ticket-item {
+      background: #f9f9f9;
+      border: 1px solid #eee;
+      padding: 1rem;
+      border-radius: 4px;
+      margin-bottom: 0.75rem;
+    }
+
+    .ticket-item h3 {
+      color: #333;
+      margin-bottom: 0.4rem;
+    }
+
+    .ticket-item p {
+      color: #666;
+      font-size: 0.9rem;
+      margin-top: 0.4rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 3px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      margin-right: 0.4rem;
+    }
+
+    .badge.LOW  { background: #e8f5e9; color: #2e7d32; }
+    .badge.MED  { background: #fff8e1; color: #f57f17; }
+    .badge.HIGH { background: #ffebee; color: #c62828; }
+    .badge.status { background: #e3f2fd; color: #1565c0; }
+  </style>
+</head>
+<body>
+  <nav>
+    <h1>AuthX – Tickets</h1>
+    <div>
+      <a href="/dashboard.html">Dashboard</a>
+      <a href="#" onclick="logout()">Logout</a>
+    </div>
+  </nav>
+
+  <div class="content">
+    <div class="card">
+      <h2>New Ticket</h2>
+      <div id="message"></div>
+      <input type="text" id="title" placeholder="Title" />
+      <textarea id="description" placeholder="Description"></textarea>
+      <select id="severity">
+        <option value="LOW">LOW</option>
+        <option value="MED">MED</option>
+        <option value="HIGH">HIGH</option>
+      </select>
+      <button onclick="createTicket()">Create Ticket</button>
+    </div>
+
+    <div class="card">
+      <h2>My Tickets</h2>
+      <div id="ticketList">Loading...</div>
+    </div>
+  </div>
+
+  <script>
+    async function loadTickets() {
+      const res = await fetch("/tickets");
+      if (res.status === 401) {
+        window.location.href = "/login.html";
+        return;
+      }
+      const tickets = await res.json();
+      const list = document.getElementById("ticketList");
+      if (tickets.length === 0) {
+        list.innerHTML = "<p style='color:#666'>No tickets yet.</p>";
+        return;
+      }
+      list.innerHTML = tickets.map(t => `
+        <div class="ticket-item">
+          <h3>${t.title}</h3>
+          <span class="badge ${t.severity}">${t.severity}</span>
+          <span class="badge status">${t.status}</span>
+          <p>${t.description || ""}</p>
+        </div>
+      `).join("");
+    }
+
+    async function createTicket() {
+      const title = document.getElementById("title").value;
+      const description = document.getElementById("description").value;
+      const severity = document.getElementById("severity").value;
+      const msg = document.getElementById("message");
+
+      const res = await fetch("/tickets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, description, severity }),
+      });
+
+      const data = await res.json();
+      msg.style.display = "block";
+
+      if (res.ok) {
+        msg.className = "success";
+        msg.textContent = "Ticket created!";
+        document.getElementById("title").value = "";
+        document.getElementById("description").value = "";
+        loadTickets();
+      } else {
+        msg.className = "error";
+        msg.textContent = data.error;
+      }
+    }
+
+    async function logout() {
+      await fetch("/auth/logout", { method: "POST" });
+      window.location.href = "/login.html";
+    }
+
+    loadTickets();
+  </script>
+</body>
+</html>
