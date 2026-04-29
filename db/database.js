@@ -11,6 +11,11 @@ db.exec(`
     locked INTEGER DEFAULT 0,
     failed_attempts INTEGER DEFAULT 0
   );
+  CREATE TABLE IF NOT EXISTS token_blacklist (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    token TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now'))
+);
 
   CREATE TABLE IF NOT EXISTS tickets (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

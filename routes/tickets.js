@@ -38,26 +38,24 @@ router.get("/search", authMiddleware, (req, res) => {
 
     try {
         const tickets = db.prepare(
-            "SELECT * FROM tickets WHERE title LIKE '%" + q + "%' AND owner_id = " + req.user.id
-        ).all();
+            "SELECT * FROM tickets WHERE title LIKE ? AND owner_id = ?"
+        ).all("%" + q + "%", req.user.id);
         return res.status(200).json(tickets);
     } catch (err) {
-        return res.status(500).json({ error: err.message });
+        return res.status(500).json({ error: "Search failed" });
     }
 });
 
-
-
 router.put("/:id", authMiddleware, (req, res) => {
-    const { title, description, severity, status } = req.body;
-
     const ticket = db
-        .prepare("SELECT * FROM tickets WHERE id = ?")
-        .get(req.params.id);
+        .prepare("SELECT * FROM tickets WHERE id = ? AND owner_id = ?")
+        .get(req.params.id, req.user.id);
 
     if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });
     }
+
+    const { title, description, severity, status } = req.body;
 
     db.prepare(
         "UPDATE tickets SET title = ?, description = ?, severity = ?, status = ?, updated_at = datetime('now') WHERE id = ?"
@@ -74,8 +72,8 @@ router.put("/:id", authMiddleware, (req, res) => {
 
 router.delete("/:id", authMiddleware, (req, res) => {
     const ticket = db
-        .prepare("SELECT * FROM tickets WHERE id = ?")
-        .get(req.params.id);
+        .prepare("SELECT * FROM tickets WHERE id = ? AND owner_id = ?")
+        .get(req.params.id, req.user.id);
 
     if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });
