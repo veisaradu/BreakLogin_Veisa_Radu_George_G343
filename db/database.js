@@ -31,17 +31,6 @@ db.exec(`
     used INTEGER DEFAULT 0,
     expires_at TEXT NOT NULL
   );
-
-  CREATE TABLE IF NOT EXISTS audit_logs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER,
-    action TEXT,
-    resource TEXT,
-    resource_id TEXT,
-    ip_address TEXT,
-    timestamp TEXT DEFAULT (datetime('now')),
-    FOREIGN KEY (user_id) REFERENCES users(id)
-  );
 `);
 
 module.exports = db;
